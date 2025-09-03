@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Message Me</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .form-container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    .form-container h1 {
+      margin-bottom: 12px;
+      font-size: 1.5em;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-size: 0.9em;
+      font-weight: bold;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    textarea {
+      resize: vertical;
+    }
+    button {
+      margin-top: 15px;
+      background: black;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 12px;
+      font-size: 0.9em;
+    }
+    .status.success { color: green; }
+    .status.error { color: red; }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1>Message Me</h1>
+    <p style="font-size:0.9em;color:#555">Your number is not required. Leave contact info only if you want a reply.</p>
+    
+    <form id="msgForm">
+      <label>Name</label>
+      <input type="text" id="name" placeholder="Your name" />
+
+      <label>Contact (optional)</label>
+      <input type="text" id="contact" placeholder="Email or phone" />
+
+      <label>Message</label>
+      <textarea id="message" rows="6" placeholder="Write your message…" required></textarea>
+
+      <button type="submit" id="sendBtn">Send</button>
+    </form>
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('msgForm');
+    const statusEl = document.getElementById('status');
+    const sendBtn = document.getElementById('sendBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = "Sending…";
+      statusEl.className = "status";
+      sendBtn.disabled = true;
+
+      const payload = {
+        name: document.getElementById('name').value,
+        contact: document.getElementById('contact').value,
+        message: document.getElementById('message').value
+      };
+
+      try {
+        const res = await fetch('/api/sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.ok) {
+          statusEl.textContent = "✅ Sent! I'll get back soon.";
+          statusEl.className = "status success";
+          form.reset();
+        } else {
+          throw new Error(data.error || "Failed to send");
+        }
+      } catch (err) {
+        statusEl.textContent = "❌ " + err.message;
+        statusEl.className = "status error";
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
